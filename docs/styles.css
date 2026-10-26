@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Condensed:300');
+@import url('https://fonts.googleapis.com/css?family=Oswald');
+
+
+:root {
+    --verde-principal: #46784a;
+    --verde-link:      #2b6a40;
+    --verde-hover:     #1f5030;
+    --verde-suave:     #56785b;
+
+    --cinza-escuro:    #4A4A4A;
+    --cinza-claro:     #F2F2F2;
+    --texto-claro:     #FFFFFF;
+}
+
+.navbar {
+    min-height: 50px;
+    padding: 5px 10px;
+    display: flex;  
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--verde-principal);
+}
+
+.navbar-nav > li > a {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 16px;
+    margin-left: 20px;
+    padding-left: 10px !important;
+    color: var(--texto-claro) !important;
+}
+
+.navbar-nav > li > a:hover {
+    color: #ddead7 !important; 
+    font-weight: bold;
+}
+
+
+
+.list-group-item.active {
+    color: var(--texto-claro);
+    background-color: var(--azul-principal);
+    border-color: var(--azul-principal);
+}
+
+
+
+.page-header {
+    background-color: var(--cinza-claro);
+    padding: 12px 15px;
+    border-radius: 4px;
+    border-left: 6px solid var(--verde-principal);
+}
+
+.page-header h1 {
+    color: var(--verde-principal);
+}
+
+
+
+h1, h2 {
+    font-family: 'Oswald', sans-serif;
+    color: var(--verde-principal);;
+    padding-top: 20px;
+    padding-bottom: 8px;
+}
+
+h3, h4 {
+    font-family: 'Oswald', sans-serif;
+    color: var(--cinza-escuro);
+}
+
+
+
+body {
+    color: var(--cinza-escuro);
+}
+
+a {
+    color: var(--verde-link);
+}
+
+a:hover {
+    color: var(--verde-hover);
+}
+
+
+
+.btn {
+    background-color: var(--verde-principal);
+    color: var(--texto-claro);
+    border: 1px solid var(--verde-principal);
+}
+
+.btn:hover {
+    background-color: var(--verde-principal);
+    border-color: var(--verde-hover);
+}
+
+
+
+pre, code {
+    background-color: #FAFAFA;
+    border-left: 4px solid var(--verde-principal);
+    color: var(--cinza-escuro);
+}
+
+
+table th {
+    background-color: var(--verde-principal);
+    color: var(--texto-claro);
+}
+
+table td {
+    color: var(--cinza-escuro);
+}

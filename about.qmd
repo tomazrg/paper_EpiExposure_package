@@ -1,16 +1,9 @@
 ---
-title: "Fungi"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Fungi}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+title: ""
+message: false
+warning: false
 ---
 
-<img src="../reference/figures/sticker.png"
-     class="pkg-page-logo"
-     alt="EpiExposure logo">
-     
 # Libraries
 
 ```{r, warning = FALSE}
@@ -23,6 +16,7 @@ library(purrr)
 library(tidyr)
 library(grid)
 library(patchwork)
+library(readxl)
 ```
 
 # Data importation
@@ -43,7 +37,7 @@ wetness_plot = epi_data%>%
   ggplot(aes(time,wetness, group = epi_id))+
   geom_smooth(se = F, color = "#55A868",linewidth = 0.3)+
   theme_bw()+
-  labs(x = "Days after planting the rice",
+  labs(x = "Days after planting the crop",
        y = "Leaf wetness (hours)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
@@ -58,12 +52,11 @@ rain_plot = epi_data%>%
   ggplot(aes(time,rain, group = epi_id))+
   geom_smooth(se = F, color = "#4C72B0",linewidth = 0.3)+
   theme_bw()+
-  labs(x = "",
+  labs(x = "Days after planting the crop",
        y = "Daily precipitation (mm)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
-  theme(axis.text.x = element_blank(),
-        text = element_text(size = 10))
+  theme(text = element_text(size = 10))
 
 rain_plot
 ```
@@ -74,22 +67,41 @@ tmean_plot = epi_data%>%
   ggplot(aes(time,tmean, group = epi_id))+
   geom_smooth(se = F, color = "#C44E52",linewidth = 0.3)+
   theme_bw()+
-  labs(x = "",
+  labs(x = "Days after planting the crop",
        y = "Mean temperature (°C)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
-  theme(axis.text.x = element_blank(),
-        text = element_text(size = 10))
+  theme(text = element_text(size = 10))
 
 tmean_plot
 ```
 
 ```{r}
+epi_sev = epi_data |> 
+  group_by(epi_id) |> 
+  summarise(
+    y = mean(y)
+  )
+```
 
-plot_grid(tmean_plot,rain_plot,wetness_plot, ncol = 1)
+```{r}
+sev_plot = epi_sev |> 
+  ggplot(aes(y))+
+  geom_histogram(color = "white", fill = "black", bins = 12)+
+  theme_bw()+
+  labs(x = "Severity (proportion)",
+       y = "Frequency")+
+  theme(text = element_text(size = 10))
+
+sev_plot
+```
+
+```{r}
+
+plot_grid(tmean_plot,rain_plot,wetness_plot, sev_plot, ncol = 2)
 
 
-ggsave("figure/exposure_lag.png", dpi = 600, bg = "white", height = 6, width = 8)
+ggsave("fig/exposure_lag.png", dpi = 600, bg = "white", height = 6, width = 8)
 ```
 
 # Model fitting
@@ -165,48 +177,6 @@ head(epi_l)
 
 ```{r}
 
-epi_l |> 
-  filter(var == "tmean") |> 
-  filter(lag == 1) |> 
-  ggplot()+
-  geom_smooth(aes(value,effect), color = "#C44E52", se = F)+
-  geom_smooth(aes(value,effect_lower), color = "#C44E52", se = F, linetype = 2)+
-  geom_smooth(aes(value,effect_upper), color = "#C44E52", se = F, linetype = 2)+
-  theme_bw()+
-  labs(x = "Exposure (°C)",
-       y = "Effect")
-```
-```{r}
-
-epi_l |> 
-  filter(var == "rain") |> 
-  filter(lag == 1) |> 
-  ggplot()+
-  geom_smooth(aes(value,effect), color = "#4C72B0", se = F)+
-  geom_smooth(aes(value,effect_lower), color = "#4C72B0", se = F, linetype = 2)+
-  geom_smooth(aes(value,effect_upper), color = "#4C72B0", se = F, linetype = 2)+
-  theme_bw()+
-  labs(x = "Exposure (mm)",
-       y = "Effect")
-```
-
-```{r}
-
-epi_l |> 
-  filter(var == "wetness") |> 
-  filter(lag == 1) |> 
-  ggplot()+
-  geom_smooth(aes(value,effect), color = "#55A868", se = F)+
-  geom_smooth(aes(value,effect_lower), color = "#55A868", se = F, linetype = 2)+
-  geom_smooth(aes(value,effect_upper), color = "#55A868", se = F, linetype = 2)+
-  theme_bw()+
-  labs(x = "Exposure (hours)",
-       y = "Effect")
-```
-
-
-```{r}
-
 lag_plot <- plot_effects(
   data = epi_l,
   scale = "lag",
@@ -221,9 +191,10 @@ lag_plot <- plot_effects(
   metric_labels = c(effect = "Effect", delta = "Δ"))
 
 lag_plot
+```
 
-ggsave("figure/lag_effect.png",dpi = 600, width = 10, height = 8)
-
+```{r}
+ggsave("fig/lag_effect.png",dpi = 600, width = 10, height = 8)
 ```
 
 ## Phase-specific
@@ -266,13 +237,11 @@ period_plot <- plot_effects(
   period_ylab = "Effect")
 
 period_plot
-
-
-
-ggsave("figure/phase_effect.png",dpi = 600, width = 8, height = 6)
-
 ```
 
+```{r}
+ggsave("fig/phase_effect.png",dpi = 600, width = 8, height = 6)
+```
 
 # Exposure Cumulative Impact (ECI)
 
@@ -292,9 +261,7 @@ ct = compute_eci(
 )
 
 ct
-
 ```
-
 
 ## Lag
 
@@ -332,7 +299,6 @@ ct2$by_lag
 ```
 
 ```{r}
-
 eci_plot <- plot_eci(
   eci_overall = ct,
   eci_lag = ct2,
@@ -347,18 +313,15 @@ eci_plot <- plot_eci(
   lag_col = "ECI_percent")
 
 eci_plot
-
 ```
 
 ```{r}
 
-ggsave("figure/eci.png",dpi = 600, width = 8, height = 6)
+ggsave("fig/eci.png",dpi = 600, width = 8, height = 6)
 
 ```
 
-
 ```{r}
-
 ct3 = ct2$by_lag
 
 ct2$by_lag_samples
@@ -368,14 +331,13 @@ ct_tmean = ct3 %>%
 
 
 cor.test(ct_tmean$exposure_minus_reference,
-         ct_tmean$percent_contribution,
+         ct_tmean$ECI_percent,
          method = "spearman")
 
 cor.test(ct_tmean$lag,
-         ct_tmean$percent_contribution,
+         ct_tmean$ECI_percent,
          method = "spearman")
 ```
-
 
 ```{r}
 
@@ -384,11 +346,11 @@ ct_rain = ct3 %>%
 
 
 cor.test(ct_rain$exposure_minus_reference,
-         ct_rain$percent_contribution,
+         ct_rain$ECI_percent,
          method = "spearman")
 
 cor.test(ct_rain$lag, 
-         ct_rain$percent_contribution,
+         ct_rain$ECI_percent,
          method = "spearman")
 ```
 
@@ -399,11 +361,11 @@ ct_wetness = ct3 %>%
 
 
 cor.test(ct_wetness$exposure_minus_reference,
-         ct_wetness$percent_contribution,
+         ct_wetness$ECI_percent,
          method = "spearman")
 
 cor.test(ct_wetness$lag, 
-         ct_wetness$percent_contribution,
+         ct_wetness$ECI_percent,
          method = "spearman")
 ```
 
@@ -621,7 +583,6 @@ exposure_wetness_02 <- simulate_exposures(max_lag = 85,
 
 ```
 
-
 ```{r}
 
 
@@ -782,11 +743,13 @@ mean(pred_02$prediction)
 ```{r}
 
 plot_grid(plot_tmean_simu_01,plot_rain_simu_01,plot_wetness_simu_01,sev_01,
-          plot_tmean_simu_02,plot_rain_simu_02,plot_wetness_simu_02,sev_02,nrow =2)
+          plot_tmean_simu_02,plot_rain_simu_02,plot_wetness_simu_02,sev_02,nrow =2,
+          labels = c("(a)", "(b)","(c)", "(d)","(e)", "(f)","(g)", "(h)"),
+          label_size = 10,label_x = -0.02)
 
-ggsave("figure/simu_plot.png", dpi = 600, height = 6, width = 12)
+
+ggsave("fig/simu_plot.png", dpi = 600, height = 6, width = 12)
 ```
-
 
 # Scenarios simulation
 
@@ -816,7 +779,7 @@ pred_scenarios = simulate_scenarios(
   scenarios = range,
   data = epi_data,
   uncertainty = TRUE,
-  output = "summary",
+  output = "sample",
   n_samples = 20,
   seed = 123)
 
@@ -835,7 +798,7 @@ plot_scenarios(
 )
 
 
-ggsave("figure/simulate_scenarios22.png", dpi = 600, height = 6, width = 8)
+ggsave("fig/simulate_scenarios.png", dpi = 600, height = 6, width = 8)
 ```
 
 ## Fixed
@@ -853,7 +816,6 @@ range2 <- simulate_ranges(
 )
 
 ```
-
 
 ```{r}
 
@@ -885,137 +847,10 @@ plot_scenarios(
 
 # Comparative analysis
 
-## Exposures
-
-```{r}
-
-compare_exp_tmean = compare_exposures(
-  exposure1 = exposure_tmean_01$profile,
-  exposure2 = exposure_tmean_02$profile,
-  mode = "timewise"
-)
-
-exp_tmean = compare_exp_tmean |> 
-  ggplot(aes(time,diff))+
-  geom_line(size = 1.4, color = "#C44E52")+
-  labs(x = "Time",
-       y = "Difference")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_tmean
-```
-
-```{r}
-
-compare_exp_tmean = compare_exposures(
-  exposure1 = exposure_tmean_01$profile,
-  exposure2 = exposure_tmean_02$profile,
-  mode = "timewise"
-)
-
-exp_tmean_ratio = compare_exp_tmean |> 
-  ggplot(aes(time,ratio))+
-  geom_line(size = 1.4, color = "#C44E52")+
-  labs(x = "Time",
-       y = "Ratio")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_tmean_ratio
-```
-
-```{r}
-
-compare_exp_rain = compare_exposures(
-  exposure1 = exposure_rain_01$profile,
-  exposure2 = exposure_rain_02$profile,
-  mode = "timewise"
-)
-
-exp_rain = compare_exp_rain |> 
-  ggplot(aes(time,diff))+
-  geom_line(size = 1.4, color = "#4C72B0")+
-  labs(x = "Time",
-       y = "Difference")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_rain
-
-```
-
-```{r}
-
-compare_exp_rain = compare_exposures(
-  exposure1 = exposure_rain_01$profile,
-  exposure2 = exposure_rain_02$profile,
-  mode = "timewise"
-)
-
-exp_rain_ratio = compare_exp_rain |> 
-  ggplot(aes(time,ratio))+
-  geom_line(size = 1.4, color = "#4C72B0")+
-  labs(x = "Time",
-       y = "Ratio")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_rain_ratio
-
-```
-
-```{r}
-
-compare_exp_wetness = compare_exposures(
-  exposure1 = exposure_wetness_01$profile,
-  exposure2 = exposure_wetness_02$profile,
-  mode = "timewise"
-)
-
-exp_wetness = compare_exp_wetness |> 
-  ggplot(aes(time,diff))+
-  geom_line(size = 1.4, color = "#55A868")+
-  labs(x = "Time",
-       y = "Difference")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_wetness
-
-```
-
-```{r}
-
-compare_exp_wetness = compare_exposures(
-  exposure1 = exposure_wetness_01$profile,
-  exposure2 = exposure_wetness_02$profile,
-  mode = "timewise"
-)
-
-exp_wetness_ratio = compare_exp_wetness |> 
-  ggplot(aes(time,ratio))+
-  geom_line(size = 1.4, color = "#55A868")+
-  labs(x = "Time",
-       y = "Ratio")+
-  theme(text = element_text(size = 10, face = "bold"))+
-  theme_bw()
-
-exp_wetness_ratio
-
-```
-
-```{r}
-
-plot_grid(exp_tmean+exp_rain+exp_wetness+exp_tmean_ratio+exp_rain_ratio+exp_wetness_ratio,nrow = 1)
-
-
-ggsave("figure/compare_exposures.png", dpi = 600, height = 6, width = 12)
-```
-
 ## Predictions
 
 ### Scenario A
+
 ```{r}
 
 exposure_tmean_A <- simulate_exposures(
@@ -1065,6 +900,7 @@ scenario_A <- list(
 ```
 
 ### Scenario B
+
 ```{r}
 
 exposure_tmean_B <- simulate_exposures(
@@ -1114,6 +950,7 @@ scenario_B <- list(
 ```
 
 ### Scenario C
+
 ```{r}
 
 exposure_tmean_C <- simulate_exposures(
@@ -1260,6 +1097,7 @@ comp_pred2 <- comp_pred2 %>%
 comp_pred2
 
 ```
+
 ```{r}
 
 comp_pred22 = comp_pred2 |> 
@@ -1307,7 +1145,9 @@ sc_simu_plot = ggplot(comp_pred,
         legend.position = "none")
 
 ```
+
 #### tmean
+
 ```{r}
 
 df_tmean_A <- purrr::imap_dfr(
@@ -1377,6 +1217,7 @@ plot_tmean_simu_B  = df_tmean_B%>%
 
 plot_tmean_simu_B
 ```
+
 ```{r}
 
 df_tmean_C <- purrr::imap_dfr(
@@ -1411,6 +1252,7 @@ plot_tmean_simu_C  = df_tmean_C%>%
 
 plot_tmean_simu_C
 ```
+
 ```{r}
 
 df_tmean_D <- purrr::imap_dfr(
@@ -1445,7 +1287,9 @@ plot_tmean_simu_D  = df_tmean_D%>%
 
 plot_tmean_simu_D
 ```
+
 #### rain
+
 ```{r}
 
 df_rain_A <- purrr::imap_dfr(
@@ -1477,6 +1321,7 @@ plot_rain_simu_A  = df_rain_A%>%
 
 plot_rain_simu_A
 ```
+
 ```{r}
 
 df_rain_B <- purrr::imap_dfr(
@@ -1509,6 +1354,7 @@ plot_rain_simu_B  = df_rain_B%>%
 plot_rain_simu_B
 
 ```
+
 ```{r}
 
 df_rain_C <- purrr::imap_dfr(
@@ -1541,6 +1387,7 @@ plot_rain_simu_C  = df_rain_C%>%
 plot_rain_simu_C
 
 ```
+
 ```{r}
 
 df_rain_D <- purrr::imap_dfr(
@@ -1573,7 +1420,9 @@ plot_rain_simu_D  = df_rain_D%>%
 plot_rain_simu_D
 
 ```
+
 #### wetness
+
 ```{r}
 
 df_wetness_A <- purrr::imap_dfr(
@@ -1605,6 +1454,7 @@ plot_wetness_simu_A  = df_wetness_A%>%
 
 plot_wetness_simu_A
 ```
+
 ```{r}
 
 df_wetness_B <- purrr::imap_dfr(
@@ -1636,6 +1486,7 @@ plot_wetness_simu_B  = df_wetness_B%>%
 
 plot_wetness_simu_B
 ```
+
 ```{r}
 
 df_wetness_C <- purrr::imap_dfr(
@@ -1667,6 +1518,7 @@ plot_wetness_simu_C  = df_wetness_C%>%
 
 plot_wetness_simu_C
 ```
+
 ```{r}
 
 df_wetness_D <- purrr::imap_dfr(
@@ -1698,6 +1550,7 @@ plot_wetness_simu_D  = df_wetness_D%>%
 
 plot_wetness_simu_D
 ```
+
 ```{r}
 
 df_tmean_A$var = "tmean"
@@ -1740,7 +1593,6 @@ df_simulations = rbind(df_tmean_A, df_tmean_B, df_tmean_C, df_tmean_D,
                        df_rain_A, df_rain_B, df_rain_C, df_rain_D,
                        df_wetness_A, df_wetness_B, df_wetness_C, df_wetness_D)
 ```
-
 
 ```{r}
 
@@ -1797,14 +1649,14 @@ combined_plot <- cowplot::plot_grid(
 
 combined_plot
 
-ggsave("figure/compare_predictions2.png", dpi = 600, width = 10, height = 5.6)
+ggsave("fig/compare_predictions.png", dpi = 600, width = 10, height = 5.6)
 ```
 
 # Prediction
 
 ## Best fit
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 library(future)
 
@@ -1816,8 +1668,7 @@ future::plan(
 future::nbrOfWorkers()
 ```
 
-```{r}
-
+```{r, echo=TRUE, eval=FALSE}
 
 best_models <- find_bestfit(
   data = epi_data,
@@ -1830,12 +1681,9 @@ best_models <- find_bestfit(
     "wetness"
   ),
   max_lag = 85,
-  df_var_grid = 4,
-  df_lag_grid = 4,
+  df_var_grid = c(2,3,4),
+  df_lag_grid = c(2,3,4),
   min_vars = 1,
-  var_sets = list(
-    c("tmean", "rain","wetness")
-  ),
   fun_var = "ns",
   fun_lag = "ns",
   model_engine = "glmmTMB",
@@ -1844,82 +1692,11 @@ best_models <- find_bestfit(
   min_success = 2,
   verbose = TRUE,
   keep_fits = TRUE,
-  cv_method = "k-fold", k = 5
+  cv_method = "LOOCV"
 )
-
-attr(best_models, "predictions_by_model")
-
 ```
 
-```{r}
-
-ws <- attr(best_models, "warning_summary")
-
-ws[
-  ws$model_id == 63,
-  c(
-    "model_id",
-    "df_var",
-    "df_lag",
-    "vars",
-    "n_warning_folds",
-    "warning_rate",
-    "n_warning_events",
-    "n_warning_types",
-    "warning_messages",
-    "full_refit_warning_events",
-    "full_refit_warning_messages"
-  )
-]
-
-```
-
-```{r}
-
-best_m = readxl::read_xlsx("best_models.xlsx")
-best_pred = readxl::read_xlsx("prediction_data.xlsx")
-```
-
-```{r}
-
-ccc_lab <- best_m |>
-  filter(model_id %in% c(63,42,56,35,49,28,40,61,19,47,33,54,
-                         26,12,5)) |>
-  mutate(label = sprintf("CCC = %.2f", CCC))
-
-best_pred |>
-  filter(model_id %in% c(63,42,56,35,49,28,40,61,19,47,33,54,
-                         26,12,5)) |>
-  ggplot(aes(observed, predicted)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "orange") +
-  geom_abline(slope = 1, intercept = 0, color = "red",
-              linetype = "dashed")+
-  geom_text(
-    data = ccc_lab,
-    aes(label = label),
-    x = -Inf,
-    y = Inf,
-    hjust = -0.1,
-    vjust = 1.4,
-    inherit.aes = FALSE,
-    size = 3.5) +
-
-  facet_wrap(~model_id, ncol = 5) +
-  theme_bw() +
-  labs(
-    x = "Observed",
-    y = "Predicted"
-  ) +
-  theme(
-    text = element_text(size = 10, face = "bold"),
-    legend.position = "none"
-  )
-
-
-```
-
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 plot_performance(
   object = best_models,
@@ -1944,13 +1721,14 @@ plot_performance(
   )
 ```
 
+![](fig/find_bestfit.png)
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
-ggsave("figure/find_bestfit2.png", dpi = 600, height = 6, width = 8)
+ggsave("figure/find_bestfit.png", dpi = 600, height = 6, width = 8)
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 best_models_plot <- best_models %>%
   dplyr::mutate(
@@ -2010,12 +1788,12 @@ best_plot <- best_models_plot %>%
   )
 
 
-ggsave("figure/bestmodels.png", dpi = 600, bg = "white", height = 6, width = 10)
+#ggsave("figure/bestmodels.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
 
 ## Ensemble
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 ens_mean <- ensemble_bestfit(
   bestfit = best_models,
@@ -2065,7 +1843,7 @@ CCC_ensemble = rbind(
 CCC_ensemble$method = c("unweighted","weighted","stacked")
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 ens_mean$ensemble_predictions$method = "unweighted"
 ens_weighted$ensemble_predictions$method = "weighted"
@@ -2076,7 +1854,7 @@ ensemble_all = rbind(ens_mean$ensemble_predictions,ens_weighted$ensemble_predict
 
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 ordem_methods <- c(
   "unweighted",
@@ -2168,10 +1946,10 @@ pos_CCC <- ensemble_plot %>%
   theme(text = element_text(size = 10,face = "bold"),legend.position = "none")
 
 
- ggsave("figure/ensemble.png", dpi = 600, bg = "white", height = 6, width = 10)
+ #ggsave("figure/ensemble.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 
 final_plot <- ensemble_gg + best_plot +
@@ -2192,110 +1970,17 @@ final_plot <- ensemble_gg + best_plot +
 final_plot
 
 #ggsave("best_ensemble.png", dpi = 600, bg = "white", height = 8, width = 12)
-ggsave("figure/best_ensemble.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
 
-# Sensitivity
+![](fig/best_ensemble.png)
 
-```{r}
-
-range_rain = simulate_ranges(
-     periods = period,
-     vary = list(
-       tmean = 25,
-       rain  = seq(0,15, by = 0.5),
-       wetness = 10
-     ),
-     scenario_type = "grid",
-     scenario_var = "rain"
-)
-
-range_tmean = simulate_ranges(
-     periods = period,
-     vary = list(
-       rain = 5,
-       tmean  = seq(18,34, by = 0.5),
-       wetness = 2
-     ),
-     scenario_type = "grid",
-     scenario_var = "tmean"
-)
-
-
-range_wetness = simulate_ranges(
-     periods = period,
-     vary = list(
-       rain = 5,
-       wetness  = seq(0,24, by = 0.5),
-       tmean = 25
-     ),
-     scenario_type = "grid",
-     scenario_var = "wetness"
-)
-
-pred_rain = simulate_scenarios(
-  fit = fit,
-  data = epi_data,
-  scenarios = range_tmean,
-  uncertainty = TRUE,
-  output = "samples",
-  n_samples = 20
-)
-
-curve_rain = pred_rain |> 
-    group_by(sample) |> 
-  transmute(
-    value = tmean,
-    prediction = prediction*100
-   # lower = prediction_lower*100,
-    #upper = prediction_upper*100
-  ) |>
-  arrange(value)
-
-
-
-curve_rain = as.data.frame(curve_rain)
-
-
-sens_rain = epi_sensitivity(
-  data = curve_rain,
-  x = "value",
-  y = "prediction",
-  scenario_var = "sample",
-  elasticity = TRUE,
-  critical = TRUE,
-  method = "finite",
-  k = 3)
-
-sens_rain |> 
-  ggplot(aes(value, sensitivity, group = sample))+
-  #geom_point()+
-  geom_smooth(se = F, color = "black")+
-  theme_bw()
-
-cor.test(sens_rain$value,
-         sens_rain$elasticity,
-         method = "kendall")
-
-sens_rain |> 
-  ggplot()+
-  geom_smooth(aes(value, prediction),se = F, color = "black")+
-  geom_smooth(aes(value, lower),se = F,
-              color = "black", linetype = "dashed")+
-  geom_smooth(aes(value, upper),se = F,
-              color = "black", linetype = "dashed")+
-  theme_bw()
-
-
-sens_rain |> 
-  ggplot(aes(value,sensitivity))+
-  geom_smooth(se = F)
-
+```{r, echo=TRUE, eval=FALSE}
+ggsave("figure/best_ensemble.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
 
 # Simulate losses
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 range_losses <- simulate_ranges(
   periods = period,
@@ -2323,7 +2008,7 @@ scenarios_losses$prediction_lower = scenarios_losses$prediction_lower*100
 scenarios_losses$prediction_upper = scenarios_losses$prediction_upper*100
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
   
 losses = simulate_losses(
@@ -2341,12 +2026,13 @@ losses = simulate_losses(
 losses
 ```
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
 losses_plot <- plot_losses(
   data = losses,
   x = "rain",
   y = "att_yield",
+  y_label = expression(bold("Attainable yield" ~ ha^{-1})),
   facet = c("tmean", "wetness"),
   type = "heatmap",
   x_breaks = seq(0, 15, by = 3),
@@ -2357,52 +2043,11 @@ losses_plot <- plot_losses(
 
 losses_plot
 
-
-ggsave("figure/simulation_yld_ec_losses.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
 
+![](fig/simulation_yld_ec_losses.png)
 
-```{r}
+```{r, echo=TRUE, eval=FALSE}
 
-scenarios_losses_s = simulate_scenarios(
-  fit = fit,
-  scenarios = range_losses,
-  data = epi_data,
-  uncertainty = TRUE,
-  output = "summary",
-  n_samples = 20,
-  seed = 123)
-
-scenarios_losses_s$prediction = scenarios_losses_s$prediction*100
-scenarios_losses_s$prediction_lower = scenarios_losses_s$prediction_lower*100
-scenarios_losses_s$prediction_upper = scenarios_losses_s$prediction_upper*100
-
-losses_s = simulate_losses(
-             data = scenarios_losses_s,
-             lower = "prediction_lower",
-             upper = "prediction_upper",
-             y = "prediction",
-             slope = c(49.3,80),
-             parameter_mode = "values",
-             intercept = c(9691.0,12000),
-             attainable_yield = seq(4000,12000, by = 50),
-             price = 300
-)
+ggsave("fig/simulation_yld_ec_losses.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
-
-
-```{r}
-
-  plot_losses(
-  data = losses_s,
-  x = "rain",
-  y = "Attainable yield",
-  facet = c("tmean", "wetness"),
-  type = "regression",
-  reg_y = "ap_yield",
-  att_yield = 12000,
-  x_breaks = seq(0, 15, by = 3),
-  x_label = "Daily precipitation (mm)")
-```
-
-
