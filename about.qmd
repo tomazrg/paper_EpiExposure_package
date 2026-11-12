@@ -41,7 +41,7 @@ wetness_plot = epi_data%>%
        y = "Leaf wetness (hours)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
-  theme(text = element_text(size = 10))
+  theme(text = element_text(size = 10, face = "bold"))
 
 wetness_plot
 ```
@@ -56,7 +56,7 @@ rain_plot = epi_data%>%
        y = "Daily precipitation (mm)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
-  theme(text = element_text(size = 10))
+  theme(text = element_text(size = 10, face = "bold"))
 
 rain_plot
 ```
@@ -71,7 +71,7 @@ tmean_plot = epi_data%>%
        y = "Mean temperature (°C)")+
   scale_x_continuous(limits = c(0,85), expand = c(0,0),
                      breaks = pretty(epi_data$time, n = 8))+
-  theme(text = element_text(size = 10))
+  theme(text = element_text(size = 10, face = "bold"))
 
 tmean_plot
 ```
@@ -91,14 +91,16 @@ sev_plot = epi_sev |>
   theme_bw()+
   labs(x = "Severity (proportion)",
        y = "Frequency")+
-  theme(text = element_text(size = 10))
+  theme(text = element_text(size = 10, face = "bold"))
 
 sev_plot
 ```
 
 ```{r}
 
-plot_grid(tmean_plot,rain_plot,wetness_plot, sev_plot, ncol = 2)
+plot_grid(tmean_plot,rain_plot,wetness_plot, sev_plot, ncol = 2,
+          labels = c("(a)", "(b)","(c)", "(d)"),
+          label_size = 10,label_x = -0.02)
 
 
 ggsave("fig/exposure_lag.png", dpi = 600, bg = "white", height = 6, width = 8)

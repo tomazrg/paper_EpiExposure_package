@@ -1,5 +1,5 @@
 ---
-title: "EpiExposure: An R Package for Modeling and Interpreting Environmental Exposure-Lag-Response Relationships In Plant Disease Epidemiology"
+title: "EpiExposure: An R Package for Exposure-Lag-Response Analysis in Plant Disease Epidemiology"
 format:
   html:
     toc: true
