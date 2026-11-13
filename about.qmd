@@ -2039,7 +2039,7 @@ losses_plot <- plot_losses(
   type = "heatmap",
   x_breaks = seq(0, 15, by = 3),
   y_breaks = seq(4000, 12000, by = 2000),
-  x_label = "Daily precipitation (mm)",
+  x_label = "Exposure",
   nrow = 2,
   facet_ncol = 4)
 
@@ -2051,5 +2051,5 @@ losses_plot
 
 ```{r, echo=TRUE, eval=FALSE}
 
-ggsave("fig/simulation_yld_ec_losses.png", dpi = 600, bg = "white", height = 6, width = 10)
+ggsave("fig/simulation_yld_ec_losses2.png", dpi = 600, bg = "white", height = 6, width = 10)
 ```
