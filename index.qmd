@@ -9,7 +9,7 @@ format:
 
 Here, we provide the code used to introduces the EpiExposure, an R package for modeling and interpreting epidemiological exposure–lag–response relationships, simulating exposure profiles, and predicting plant disease outcomes from environmental drivers.
  
-A preprint version of this work has been available at [here]().
+A preprint version of this work has been available at [here](https://zenodo.org/records/24408928).
 
 ------------------------------------------------------------------------
 

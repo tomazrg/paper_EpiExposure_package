@@ -747,7 +747,7 @@ mean(pred_02$prediction)
 plot_grid(plot_tmean_simu_01,plot_rain_simu_01,plot_wetness_simu_01,sev_01,
           plot_tmean_simu_02,plot_rain_simu_02,plot_wetness_simu_02,sev_02,nrow =2,
           labels = c("(a)", "(b)","(c)", "(d)","(e)", "(f)","(g)", "(h)"),
-          label_size = 10,label_x = -0.02)
+          label_size = 13,label_x = -0.04)
 
 
 ggsave("fig/simu_plot.png", dpi = 600, height = 6, width = 12)
